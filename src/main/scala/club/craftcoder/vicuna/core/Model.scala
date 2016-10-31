@@ -1,30 +1,43 @@
 package club.craftcoder.vicuna.core
 
-import java.util.Date
-
 import com.ecfront.common.Resp
 
-import scala.beans.BeanProperty
+import scala.collection.mutable.ArrayBuffer
 
-case class StatusDef(code:String,name:String,execFun: (NodeInst,Any) => Resp[Void])
-case class TransferDef(fromCode:String,toCode:String,auto:Boolean,condition: NodeInst => Boolean=null,expireSec:Int= -1)
+case class StatusDef(
+                      code: String,
+                      name: String,
+                      execFun: FlowInst => Resp[Void]
+                    )
 
-class NodeInst{
+case class TransferDef(
+                        fromCode: String,
+                        toCode: String,
+                        auto: Boolean,
+                        condition: FlowInst => Boolean = null,
+                        expireSec: Int = -1
+                      )
 
- @BeanProperty var flow_code:String=_
- @BeanProperty var obj_code:String=_
- @BeanProperty var obj_name:String=_
- @BeanProperty var args:collection.Map[String,Any]=_
+case class GraphDef(code: String,
+                    name: String,
+                    startNodeCode: String,
+                    nodes: collection.mutable.Map[String, NodeDef]
+                   )
 
-}
+case class NodeDef(code: String,
+                   name: String,
+                   execFun: FlowInst => Resp[Void],
+                   parentNodeCodes: ArrayBuffer[String],
+                   childrenNodeCodes: ArrayBuffer[String]
+                  )
 
-class TransferInst{
+case class FlowInst(
+                flowCode: String,
+                objCode: String,
+                currStatusCodes: Set[String],
+                currArgs: collection.mutable.Map[String, Any]
+              ){
 
-  @BeanProperty var obj_code:String=_
-  @BeanProperty var from_node_code:String=_
-  @BeanProperty var to_node_code:String=_
-  @BeanProperty var transfer_operator: String=_
-  @BeanProperty var transfer_opt_time: Date=_
-  @BeanProperty var args: Map[String,String]=_
+  var objName: String=_
 
 }

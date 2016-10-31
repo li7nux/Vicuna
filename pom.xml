@@ -39,6 +39,18 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.ecfront</groupId>
+            <artifactId>ezf-jdbc</artifactId>
+            <version>4.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ecfront</groupId>
+            <artifactId>ezf-test</artifactId>
+            <version>4.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
