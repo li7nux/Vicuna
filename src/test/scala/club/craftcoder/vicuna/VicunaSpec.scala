@@ -8,7 +8,7 @@ import com.ecfront.ez.framework.test.MockStartupSpec
 class VicunaSpec extends MockStartupSpec {
 
   test("basic test") {
-    JDBCProcessor.ddl("TRUNCATE TABLE vic_status_log")
+    // JDBCProcessor.ddl("TRUNCATE TABLE vic_status_log")
     Vicuna.setDataExchange(TestDataExchange).define("order", "订单", List(
       StatusDef("SUBMITTED", "提交", {
         inst =>

@@ -32,8 +32,8 @@ object TestDataExchange extends DataExchange {
     log.obj_code = flowInst.objCode
     log.enter_time = TimeHelper.msf.format(new Date()).toLong
     log.leave_time = -1
-    log.down_payment = 0
-    log.final_payment = 0
+    log.down_payment = 0.00
+    log.final_payment = 0.00
     log.enable = true
     Vic_status_log.save(log)
   }
