@@ -10,7 +10,7 @@ case class StatusDef(
                       execFun: FlowInst => Resp[Void]
                     )
 
-case class TransferDef(
+case class TransitionDef(
                         fromCode: String,
                         toCode: String,
                         auto: Boolean,

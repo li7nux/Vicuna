@@ -17,12 +17,9 @@ class Vic_status_log extends SecureModel with StatusModel {
   @Desc("状态", 200, 0)
   @Index
   @BeanProperty var status: String = _
-  @Desc("进入时间", 0, 0)
+  @Desc("添加时间", 0, 0)
   @Index
-  @BeanProperty var enter_time: Long = _
-  @Desc("离开时间", 0, 0)
-  @Index
-  @BeanProperty var leave_time: Long = _
+  @BeanProperty var add_time: Long = _
   @Desc("首付金额", 14, 2)
   @BeanProperty var down_payment: BigDecimal = _
   @Desc("尾款金额", 14, 2)

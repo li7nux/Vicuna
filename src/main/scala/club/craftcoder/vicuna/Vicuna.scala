@@ -10,7 +10,7 @@ object Vicuna {
     this
   }
 
-  def define(flowCode: String, flowName: String, status: List[StatusDef], transitions: List[TransferDef]): this.type = {
+  def define(flowCode: String, flowName: String, status: List[StatusDef], transitions: List[TransitionDef]): this.type = {
     FlowController.Manage.generate(flowCode, flowName, status, transitions)
     this
   }

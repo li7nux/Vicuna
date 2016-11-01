@@ -1,6 +1,6 @@
 package club.craftcoder.vicuna
 
-import club.craftcoder.vicuna.core.{StatusDef, TransferDef}
+import club.craftcoder.vicuna.core.{StatusDef, TransitionDef}
 import com.ecfront.common.Resp
 import com.ecfront.ez.framework.service.jdbc.JDBCProcessor
 import com.ecfront.ez.framework.test.MockStartupSpec
@@ -8,12 +8,12 @@ import com.ecfront.ez.framework.test.MockStartupSpec
 class VicunaSpec extends MockStartupSpec {
 
   test("basic test") {
-    // JDBCProcessor.ddl("TRUNCATE TABLE vic_status_log")
+    JDBCProcessor.ddl("TRUNCATE TABLE vic_status_log")
     Vicuna.setDataExchange(TestDataExchange).define("order", "订单", List(
       StatusDef("SUBMITTED", "提交", {
         inst =>
-          inst.currArgs += "down_payment" -> 111
-          inst.currArgs += "final_payment" -> 222
+          inst.currArgs += "down_payment" -> BigDecimal(111.1)
+          inst.currArgs += "final_payment" -> BigDecimal(222.1)
           Resp.success(null)
       }),
 
@@ -21,8 +21,8 @@ class VicunaSpec extends MockStartupSpec {
       StatusDef("DISAPPROVED_AI", "机审拒绝", { _ => Resp.success(null) }),
       StatusDef("APPROVE_ADJUST_AI", "机审调整", {
         inst =>
-          inst.currArgs += "down_payment" -> 222
-          inst.currArgs += "final_payment" -> 333
+          inst.currArgs += "down_payment" -> BigDecimal(222.1)
+          inst.currArgs += "final_payment" -> BigDecimal(333.1)
           Resp.success(null)
       }),
       StatusDef("APPROVED_AI", "机审通过", { _ => Resp.success(null) }),
@@ -50,61 +50,61 @@ class VicunaSpec extends MockStartupSpec {
 
       StatusDef("CANCEL", "取消", { _ => Resp.success(null) })
     ), List(
-      TransferDef("SUBMITTED", "APPROVING_AI", auto = true),
-      TransferDef("APPROVING_AI", "DISAPPROVED_AI", auto = false, {
+      TransitionDef("SUBMITTED", "APPROVING_AI", auto = true),
+      TransitionDef("APPROVING_AI", "DISAPPROVED_AI", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "reject"
       }),
-      TransferDef("APPROVING_AI", "APPROVED_AI", auto = false, {
+      TransitionDef("APPROVING_AI", "APPROVED_AI", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "pass"
       }),
-      TransferDef("APPROVING_AI", "APPROVE_ADJUST_AI", auto = false, {
+      TransitionDef("APPROVING_AI", "APPROVE_ADJUST_AI", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "adjust"
       }),
-      TransferDef("DISAPPROVED_AI", "DISAPPROVED", auto = true),
-      TransferDef("APPROVED_AI", "APPROVED", auto = true),
-      TransferDef("APPROVE_ADJUST_AI", "APPROVING_MANUAL", auto = true),
-      TransferDef("APPROVING_MANUAL", "DISAPPROVED_MANUAL", auto = false, {
+      TransitionDef("DISAPPROVED_AI", "DISAPPROVED", auto = true),
+      TransitionDef("APPROVED_AI", "APPROVED", auto = true),
+      TransitionDef("APPROVE_ADJUST_AI", "APPROVING_MANUAL", auto = true),
+      TransitionDef("APPROVING_MANUAL", "DISAPPROVED_MANUAL", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "reject"
       }),
-      TransferDef("APPROVING_MANUAL", "APPROVED_MANUAL", auto = false, {
+      TransitionDef("APPROVING_MANUAL", "APPROVED_MANUAL", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "pass"
       }),
-      TransferDef("DISAPPROVED_MANUAL", "DISAPPROVED", auto = true),
-      TransferDef("APPROVED_MANUAL", "APPROVED", auto = true),
-      TransferDef("APPROVED", "CONTRACT_GENERATING", auto = false),
-      TransferDef("CONTRACT_GENERATING", "CONTRACT_FAILED", auto = true, {
+      TransitionDef("DISAPPROVED_MANUAL", "DISAPPROVED", auto = true),
+      TransitionDef("APPROVED_MANUAL", "APPROVED", auto = true),
+      TransitionDef("APPROVED", "CONTRACT_GENERATING", auto = false),
+      TransitionDef("CONTRACT_GENERATING", "CONTRACT_FAILED", auto = true, {
         _.currArgs("result").asInstanceOf[String] == "error"
       }),
-      TransferDef("CONTRACT_GENERATING", "CONTRACT_READY", auto = true, {
+      TransitionDef("CONTRACT_GENERATING", "CONTRACT_READY", auto = true, {
         _.currArgs("result").asInstanceOf[String] == "pass"
       }),
-      TransferDef("CONTRACT_FAILED", "CONTRACT_GENERATING", auto = false),
-      TransferDef("CONTRACT_READY", "CONTRACT_SIGNING", auto = false),
-      TransferDef("CONTRACT_READY", "BIOPSYING", auto = false),
-      TransferDef("CONTRACT_SIGNING", "CONTRACT_SIGN_FAILED", auto = true, {
+      TransitionDef("CONTRACT_FAILED", "CONTRACT_GENERATING", auto = false),
+      TransitionDef("CONTRACT_READY", "CONTRACT_SIGNING", auto = false),
+      TransitionDef("CONTRACT_READY", "BIOPSYING", auto = false),
+      TransitionDef("CONTRACT_SIGNING", "CONTRACT_SIGN_FAILED", auto = true, {
         _.currArgs("result").asInstanceOf[String] == "error"
       }),
-      TransferDef("CONTRACT_SIGNING", "CONTRACT_SIGNED", auto = true, {
+      TransitionDef("CONTRACT_SIGNING", "CONTRACT_SIGNED", auto = true, {
         _.currArgs("result").asInstanceOf[String] == "pass"
       }),
-      TransferDef("CONTRACT_SIGN_FAILED", "CONTRACT_SIGNING", auto = false),
-      TransferDef("BIOPSYING", "BIOPSY_FAILED", auto = true, {
+      TransitionDef("CONTRACT_SIGN_FAILED", "CONTRACT_SIGNING", auto = false),
+      TransitionDef("BIOPSYING", "BIOPSY_FAILED", auto = true, {
         _.currArgs("result").asInstanceOf[String] == "error"
       }),
-      TransferDef("BIOPSYING", "BIOPSY_FINISH", auto = true, {
+      TransitionDef("BIOPSYING", "BIOPSY_FINISH", auto = true, {
         _.currArgs("result").asInstanceOf[String] == "pass"
       }),
-      TransferDef("BIOPSY_FAILED", "BIOPSYING", auto = false),
-      TransferDef("BIOPSY_FINISH", "PAYMENT_CONFIRMING", auto = true, {
+      TransitionDef("BIOPSY_FAILED", "BIOPSYING", auto = false),
+      TransitionDef("BIOPSY_FINISH", "PAYMENT_CONFIRMING", auto = true, {
         _.currStatusCodes.contains("CONTRACT_SIGNED")
       }),
-      TransferDef("CONTRACT_SIGNED", "PAYMENT_CONFIRMING", auto = true, {
+      TransitionDef("CONTRACT_SIGNED", "PAYMENT_CONFIRMING", auto = true, {
         _.currStatusCodes.contains("BIOPSY_FINISH")
       }),
-      TransferDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRM_REJECTED", auto = false, {
+      TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRM_REJECTED", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "reject"
       }),
-      TransferDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRMED", auto = false, {
+      TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRMED", auto = false, {
         _.currArgs("result").asInstanceOf[String] == "pass"
       })
     ))

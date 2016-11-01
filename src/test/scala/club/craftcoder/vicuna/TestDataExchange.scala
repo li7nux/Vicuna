@@ -26,26 +26,19 @@ object TestDataExchange extends DataExchange {
   }
 
   override def preExecute(currNodeCode: String, flowInst: FlowInst): Unit = {
+
+  }
+
+  override def postExecute(currNodeCode: String, flowInst: FlowInst): Unit = {
     val log = new Vic_status_log
     log.status = currNodeCode
     log.flow_code = flowInst.flowCode
     log.obj_code = flowInst.objCode
-    log.enter_time = TimeHelper.msf.format(new Date()).toLong
-    log.leave_time = -1
-    log.down_payment = 0.00
-    log.final_payment = 0.00
-    log.enable = true
-    Vic_status_log.save(log)
-  }
-
-  override def postExecute(currNodeCode: String, flowInst: FlowInst): Unit = {
-    val log = Vic_status_log.getByCond("flow_code = ? AND obj_code = ? AND status =?",
-      List(flowInst.flowCode, flowInst.objCode, currNodeCode)).body
-    log.leave_time = TimeHelper.msf.format(new Date()).toLong
+    log.add_time = TimeHelper.msf.format(new Date()).toLong
     log.down_payment = flowInst.currArgs("down_payment").asInstanceOf[BigDecimal]
     log.final_payment = flowInst.currArgs("final_payment").asInstanceOf[BigDecimal]
     log.enable = true
-    Vic_status_log.update(log)
+    Vic_status_log.save(log)
   }
 
   override def tryLock[E](code: String)(execFun: => E): E = {
