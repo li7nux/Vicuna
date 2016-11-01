@@ -19,8 +19,8 @@ object Vicuna {
     FlowController.start(flowCode, objCode, objName)
   }
 
-  def next(flowCode: String, currNodeCode: String, objCode: String): Resp[Void] = {
-    FlowController.next(flowCode, currNodeCode, objCode)
+  def next(flowCode: String, currNodeCode: String, objCode: String,args:Map[String,Any]=Map()): Resp[Void] = {
+    FlowController.next(flowCode, currNodeCode, objCode,args)
   }
 
 }

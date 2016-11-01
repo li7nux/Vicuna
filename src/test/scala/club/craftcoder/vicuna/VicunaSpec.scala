@@ -51,65 +51,75 @@ class VicunaSpec extends MockStartupSpec {
       StatusDef("CANCEL", "取消", { _ => Resp.success(null) })
     ), List(
       TransitionDef("SUBMITTED", "APPROVING_AI", auto = true),
-      TransitionDef("APPROVING_AI", "DISAPPROVED_AI", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "reject"
-      }),
-      TransitionDef("APPROVING_AI", "APPROVED_AI", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "pass"
-      }),
-      TransitionDef("APPROVING_AI", "APPROVE_ADJUST_AI", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "adjust"
-      }),
+      TransitionDef("APPROVING_AI", "DISAPPROVED_AI", auto = false, _.currArgs("result").asInstanceOf[String] == "reject"),
+      TransitionDef("APPROVING_AI", "APPROVED_AI", auto = false, _.currArgs("result").asInstanceOf[String] == "pass"),
+      TransitionDef("APPROVING_AI", "APPROVE_ADJUST_AI", auto = false, _.currArgs("result").asInstanceOf[String] == "adjust"),
       TransitionDef("DISAPPROVED_AI", "DISAPPROVED", auto = true),
       TransitionDef("APPROVED_AI", "APPROVED", auto = true),
       TransitionDef("APPROVE_ADJUST_AI", "APPROVING_MANUAL", auto = true),
-      TransitionDef("APPROVING_MANUAL", "DISAPPROVED_MANUAL", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "reject"
-      }),
-      TransitionDef("APPROVING_MANUAL", "APPROVED_MANUAL", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "pass"
-      }),
+      TransitionDef("APPROVING_MANUAL", "DISAPPROVED_MANUAL", auto = false, _.currArgs("result").asInstanceOf[String] == "reject"),
+      TransitionDef("APPROVING_MANUAL", "APPROVED_MANUAL", auto = false, _.currArgs("result").asInstanceOf[String] == "pass"),
       TransitionDef("DISAPPROVED_MANUAL", "DISAPPROVED", auto = true),
       TransitionDef("APPROVED_MANUAL", "APPROVED", auto = true),
       TransitionDef("APPROVED", "CONTRACT_GENERATING", auto = false),
-      TransitionDef("CONTRACT_GENERATING", "CONTRACT_FAILED", auto = true, {
-        _.currArgs("result").asInstanceOf[String] == "error"
-      }),
-      TransitionDef("CONTRACT_GENERATING", "CONTRACT_READY", auto = true, {
-        _.currArgs("result").asInstanceOf[String] == "pass"
-      }),
+      TransitionDef("CONTRACT_GENERATING", "CONTRACT_FAILED", auto = false, _.currArgs("result").asInstanceOf[String] == "error"),
+      TransitionDef("CONTRACT_GENERATING", "CONTRACT_READY", auto = false, _.currArgs("result").asInstanceOf[String] == "pass"),
       TransitionDef("CONTRACT_FAILED", "CONTRACT_GENERATING", auto = false),
-      TransitionDef("CONTRACT_READY", "CONTRACT_SIGNING", auto = false),
-      TransitionDef("CONTRACT_READY", "BIOPSYING", auto = false),
-      TransitionDef("CONTRACT_SIGNING", "CONTRACT_SIGN_FAILED", auto = true, {
-        _.currArgs("result").asInstanceOf[String] == "error"
-      }),
-      TransitionDef("CONTRACT_SIGNING", "CONTRACT_SIGNED", auto = true, {
-        _.currArgs("result").asInstanceOf[String] == "pass"
-      }),
+      TransitionDef("CONTRACT_READY", "CONTRACT_SIGNING", auto = true),
+      TransitionDef("CONTRACT_READY", "BIOPSYING", auto = true),
+      TransitionDef("CONTRACT_SIGNING", "CONTRACT_SIGN_FAILED", auto = false, _.currArgs("result").asInstanceOf[String] == "error"),
+      TransitionDef("CONTRACT_SIGNING", "CONTRACT_SIGNED", auto = false, _.currArgs("result").asInstanceOf[String] == "pass"),
       TransitionDef("CONTRACT_SIGN_FAILED", "CONTRACT_SIGNING", auto = false),
-      TransitionDef("BIOPSYING", "BIOPSY_FAILED", auto = true, {
-        _.currArgs("result").asInstanceOf[String] == "error"
-      }),
-      TransitionDef("BIOPSYING", "BIOPSY_FINISH", auto = true, {
-        _.currArgs("result").asInstanceOf[String] == "pass"
-      }),
+      TransitionDef("BIOPSYING", "BIOPSY_FAILED", auto = false, _.currArgs("result").asInstanceOf[String] == "error"),
+      TransitionDef("BIOPSYING", "BIOPSY_FINISH", auto = false, _.currArgs("result").asInstanceOf[String] == "pass"),
       TransitionDef("BIOPSY_FAILED", "BIOPSYING", auto = false),
-      TransitionDef("BIOPSY_FINISH", "PAYMENT_CONFIRMING", auto = true, {
-        _.currStatusCodes.contains("CONTRACT_SIGNED")
-      }),
-      TransitionDef("CONTRACT_SIGNED", "PAYMENT_CONFIRMING", auto = true, {
-        _.currStatusCodes.contains("BIOPSY_FINISH")
-      }),
-      TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRM_REJECTED", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "reject"
-      }),
-      TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRMED", auto = false, {
-        _.currArgs("result").asInstanceOf[String] == "pass"
-      })
+      TransitionDef("BIOPSY_FINISH", "PAYMENT_CONFIRMING", auto = true, _.currStatusCodes.contains("CONTRACT_SIGNED")),
+      TransitionDef("CONTRACT_SIGNED", "PAYMENT_CONFIRMING", auto = true, _.currStatusCodes.contains("BIOPSY_FINISH")),
+      TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRM_REJECTED", auto = false, _.currArgs("result").asInstanceOf[String] == "reject"),
+      TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRMED", auto = false, _.currArgs("result").asInstanceOf[String] == "pass")
     ))
 
-    Vicuna.start("order", "00001", "测试订单1")
+    val t1 = new Thread(new Runnable {
+      override def run(): Unit = {
+        Vicuna.start("order", "00001", "测试订单1")
+        Thread.sleep(1000)
+        Vicuna.next("order", "APPROVING_AI", "00001", Map("result" -> "reject"))
+      }
+    })
+    val t2 = new Thread(new Runnable {
+      override def run(): Unit = {
+        Vicuna.start("order", "00002", "测试订单2")
+        Thread.sleep(1000)
+        Vicuna.next("order", "APPROVING_AI", "00002", Map("result" -> "adjust"))
+        Thread.sleep(1000)
+        Vicuna.next("order", "APPROVING_MANUAL", "00002", Map("result" -> "pass"))
+        Thread.sleep(1000)
+        Vicuna.next("order", "APPROVED", "00002")
+        Thread.sleep(1000)
+        Vicuna.next("order", "CONTRACT_GENERATING", "00002", Map("result" -> "error"))
+        Thread.sleep(1000)
+        Vicuna.next("order", "CONTRACT_FAILED", "00002")
+        Thread.sleep(1000)
+        Vicuna.next("order", "CONTRACT_GENERATING", "00002", Map("result" -> "pass"))
+        Thread.sleep(1000)
+      }
+    })
+    val t3 = new Thread(new Runnable {
+      override def run(): Unit = {
+      }
+    })
+    val t4 = new Thread(new Runnable {
+      override def run(): Unit = {
+      }
+    })
+    t1.start()
+    t2.start()
+    t3.start()
+    t4.start()
+    t1.join()
+    t2.join()
+    t3.join()
+    t4.join()
 
   }
 

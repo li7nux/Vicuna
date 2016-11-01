@@ -60,16 +60,18 @@ object FlowController extends LazyLogging {
     }
   }
 
-  def next(flowCode: String, currNodeCode: String, objCode: String): Resp[Void] = {
-    logger.info(s"[STATUS] next node from [$currNodeCode] obj $objCode  at $flowCode")
+  def next(flowCode: String, currNodeCode: String, objCode: String, args: Map[String, Any]): Resp[Void] = {
+    logger.info(s"[STATUS] next node from [$currNodeCode] obj $objCode at $flowCode")
     val graphF = Container.GRAPH_CONTAINER.get(flowCode)
     if (graphF.isDefined) {
       val currNodeF = graphF.get.nodes.get(currNodeCode)
       if (currNodeF.isDefined) {
-        tryNext(graphF.get, currNodeF.get, objCode, force = true)
+        val flowInst = getFlowInst(flowCode, objCode)
+        flowInst.currArgs ++= args
+        tryNext(graphF.get, currNodeF.get, flowInst, force = true)
       } else {
-        logger.error(s"[STATUS] not found node [${currNodeF.get}] obj $objCode  at ${graphF.get.code}")
-        Resp.notFound(s"not found node [${currNodeF.get}] obj $objCode  at ${graphF.get.code}")
+        logger.error(s"[STATUS] not found node [${currNodeF.get}] obj $objCode at ${graphF.get.code}")
+        Resp.notFound(s"not found node [${currNodeF.get}] obj $objCode at ${graphF.get.code}")
       }
     } else {
       logger.error(s"[STATUS] not found flow [$flowCode]")
@@ -77,41 +79,40 @@ object FlowController extends LazyLogging {
     }
   }
 
-  private def tryNext(graph: GraphDef, currNode: NodeDef, objCode: String, force: Boolean = false): Resp[Void] = {
-    val flowInst = getFlowInst(graph.code, objCode)
+  private def tryNext(graph: GraphDef, currNode: NodeDef, flowInst: FlowInst, force: Boolean = false): Resp[Void] = {
     if (flowInst.currStatusCodes.contains(currNode.code)) {
       if (currNode.childrenNodeCodes != null && currNode.childrenNodeCodes.nonEmpty) {
-        val transitionF = Container.TRANSITION_CONTAINER(graph.code).get(currNode.code)
+        val transitionF = Container.TRANSITION_CONTAINER(flowInst.flowCode).get(currNode.code)
         if (transitionF.isDefined) {
           transitionF.get.foreach {
             transition =>
               if (transition.auto || force) {
                 if (transition.condition == null || transition.condition(flowInst)) {
                   // Next
-                  logger.info(s"[STATUS] do next node from [${currNode.code}] to [${transition.toCode}] obj $objCode  at ${graph.code}")
-                  execute(graph, transition.toCode, currNode.code, objCode)
+                  logger.info(s"[STATUS] do next node from [${currNode.code}] to [${transition.toCode}] obj ${flowInst.objCode} at ${graph.code}")
+                  execute(graph, transition.toCode, currNode.code, flowInst.objCode)
                 }
               }
           }
         } else {
-          logger.error(s"[STATUS] not found transition [${currNode.code}] obj $objCode  at ${graph.code}")
+          logger.error(s"[STATUS] not found transition [${currNode.code}] obj ${flowInst.objCode} at ${graph.code}")
         }
         Resp.success(null)
       } else {
         // EOF
-        logger.info(s"[STATUS] flow finish obj $objCode  at ${graph.code}")
+        logger.info(s"[STATUS] flow finish obj ${flowInst.objCode} at ${graph.code}")
         Resp.success(null)
       }
     } else {
-      logger.error(s"[STATUS] the node : ${currNode.code} is not in current status(${flowInst.currStatusCodes.mkString(",")}) obj $objCode  at ${graph.code}")
-      Resp.conflict(s"the node : ${currNode.code} is not in current status(${flowInst.currStatusCodes.mkString(",")}) obj $objCode  at ${graph.code}")
+      logger.error(s"[STATUS] the node : ${currNode.code} is not in current status(${flowInst.currStatusCodes.mkString(",")}) obj ${flowInst.objCode} at ${graph.code}")
+      Resp.conflict(s"the node : ${currNode.code} is not in current status(${flowInst.currStatusCodes.mkString(",")}) obj ${flowInst.objCode} at ${graph.code}")
     }
   }
 
   private def execute(graph: GraphDef, currNodeCode: String, oldNodeCode: String, objCode: String): Resp[Void] = {
     val nodeF = graph.nodes.get(currNodeCode)
     if (nodeF.isDefined) {
-      val flowInst = getFlowInst(graph.code, objCode)
+      var flowInst = getFlowInst(graph.code, objCode)
       Container.dataExchange.preExecute(currNodeCode, flowInst)
       try {
         val execResult = nodeF.get.execFun(flowInst)
@@ -120,19 +121,20 @@ object FlowController extends LazyLogging {
             Container.dataExchange.disableOldStatus(graph.code, oldNodeCode, objCode)
           }
           Container.dataExchange.postExecute(currNodeCode, flowInst)
-          tryNext(graph, nodeF.get, flowInst.objCode)
+          flowInst = getFlowInst(graph.code, objCode)
+          tryNext(graph, nodeF.get, flowInst)
         } else {
-          logger.error(s"[STATUS] execute [$currNodeCode] error obj $objCode  at ${graph.code}")
-          Resp.unknown(s"execute [$currNodeCode] error obj $objCode  at ${graph.code}")
+          logger.error(s"[STATUS] execute [$currNodeCode] error obj $objCode at ${graph.code}")
+          Resp.unknown(s"execute [$currNodeCode] error obj $objCode at ${graph.code}")
         }
       } catch {
         case e: Throwable =>
-          logger.error(s"[STATUS] execute [$currNodeCode] error obj $objCode  at ${graph.code} : ${e.getMessage}", e)
-          Resp.unknown(s"execute [$currNodeCode] error obj $objCode  at ${graph.code} : ${e.getMessage}")
+          logger.error(s"[STATUS] execute [$currNodeCode] error obj $objCode at ${graph.code} : ${e.getMessage}", e)
+          Resp.unknown(s"execute [$currNodeCode] error obj $objCode at ${graph.code} : ${e.getMessage}")
       }
     } else {
-      logger.error(s"[STATUS] not found node [$currNodeCode] obj $objCode  at ${graph.code}")
-      Resp.notFound(s"not found node [$currNodeCode] obj $objCode  at ${graph.code}")
+      logger.error(s"[STATUS] not found node [$currNodeCode] obj $objCode at ${graph.code}")
+      Resp.notFound(s"not found node [$currNodeCode] obj $objCode at ${graph.code}")
     }
   }
 
