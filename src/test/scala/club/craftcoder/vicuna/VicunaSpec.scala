@@ -102,6 +102,16 @@ class VicunaSpec extends MockStartupSpec {
         Thread.sleep(1000)
         Vicuna.next("order", "CONTRACT_GENERATING", "00002", Map("result" -> "pass"))
         Thread.sleep(1000)
+        Vicuna.next("order", "CONTRACT_SIGNING", "00002", Map("result" -> "error"))
+        Thread.sleep(1000)
+        Vicuna.next("order", "CONTRACT_SIGN_FAILED", "00002")
+        Thread.sleep(1000)
+        Vicuna.next("order", "CONTRACT_SIGNING", "00002", Map("result" -> "pass"))
+        Thread.sleep(1000)
+        Vicuna.next("order", "BIOPSYING", "00002", Map("result" -> "pass"))
+        Thread.sleep(1000)
+        Vicuna.next("order", "PAYMENT_CONFIRMING", "00002", Map("result" -> "pass"))
+        Thread.sleep(1000)
       }
     })
     val t3 = new Thread(new Runnable {
