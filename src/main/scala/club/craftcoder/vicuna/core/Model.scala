@@ -21,6 +21,7 @@ case class TransitionDef(
 case class GraphDef(code: String,
                     name: String,
                     startNodeCode: String,
+                    startNodeName: String,
                     nodes: collection.mutable.Map[String, NodeDef]
                    )
 

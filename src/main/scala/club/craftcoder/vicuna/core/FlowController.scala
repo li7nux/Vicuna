@@ -31,7 +31,7 @@ object FlowController extends LazyLogging {
       */
     private def generateGraph(flowCode: String, flowName: String, status: List[StatusDef], transitions: List[TransitionDef]): Unit = {
       val vertexNode = status.find(stat => !Container.TRANSITION_CONTAINER.contains(stat.code)).get
-      Container.GRAPH_CONTAINER += flowCode -> GraphDef(flowCode, flowName, vertexNode.code, generateNodes(status, transitions))
+      Container.GRAPH_CONTAINER += flowCode -> GraphDef(flowCode, flowName, vertexNode.code, vertexNode.name, generateNodes(status, transitions))
     }
 
     /**

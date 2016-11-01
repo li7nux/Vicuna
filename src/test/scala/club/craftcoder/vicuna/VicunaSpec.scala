@@ -79,6 +79,8 @@ class VicunaSpec extends MockStartupSpec {
       TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRMED", auto = false, _.currArgs("result").asInstanceOf[String] == "pass")
     ))
 
+    Vicuna.buildChart("order","C:\\Users\\i\\OneDrive\\Work_Projects\\ProjectDeveloping\\Vicuna\\src\\test\\resources\\order_chart.html")
+
     val t1 = new Thread(new Runnable {
       override def run(): Unit = {
         Vicuna.start("order", "00001", "测试订单1")

@@ -1,6 +1,7 @@
 package club.craftcoder.vicuna
 
 import club.craftcoder.vicuna.core._
+import club.craftcoder.vicuna.ext.ChartController
 import com.ecfront.common.Resp
 
 object Vicuna {
@@ -12,6 +13,11 @@ object Vicuna {
 
   def define(flowCode: String, flowName: String, status: List[StatusDef], transitions: List[TransitionDef]): this.type = {
     FlowController.Manage.generate(flowCode, flowName, status, transitions)
+    this
+  }
+
+  def buildChart(flowCode: String,path:String): this.type = {
+    ChartController.buildChart(flowCode,path)
     this
   }
 
