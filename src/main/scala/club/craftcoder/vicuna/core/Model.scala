@@ -15,7 +15,8 @@ case class TransitionDef(
                         toCode: String,
                         auto: Boolean,
                         condition: FlowInst => Boolean = null,
-                        expireSec: Int = -1
+                        expireSec: Int = -1,
+                        name:String=""
                       )
 
 case class GraphDef(code: String,
