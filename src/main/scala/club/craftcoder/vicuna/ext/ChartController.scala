@@ -52,8 +52,7 @@ object ChartController {
   }
 
   private def packageHtml(content: String): String = {
-    s"""
-       |<!DOCTYPE html>
+    s"""<!DOCTYPE html>
        |<html lang="en">
        |<head>
        |    <meta charset="utf-8">
@@ -68,8 +67,7 @@ object ChartController {
        |$content
        |</div>
        |</body>
-       |</html>
-     """.stripMargin
+       |</html>""".stripMargin
   }
 
 }
