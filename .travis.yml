@@ -1,0 +1,13 @@
+language: scala
+
+script: mvn clean package
+
+scala:
+  - 2.11.7
+jdk:
+  - oraclejdk8
+  
+notifications:
+  email:
+    - li7nux@gmail.com
+    - i@sunisle.org

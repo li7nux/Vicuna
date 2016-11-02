@@ -1,0 +1,21 @@
+{
+  "ez": {
+    "app": "",
+    "module": "",
+    "cache": {
+      "address": "127.0.0.1:6379"
+    },
+    "rpc":{
+      "package":"club.craftcoder.vicuna"
+    },
+    "services": {
+      "jdbc": {
+        "url": "jdbc:mysql://127.0.0.1:3306/vicuna?characterEncoding=UTF-8&autoReconnect=true",
+        "userName": "root",
+        "password": "123456"
+      }
+    }
+  },
+  "args": {
+  }
+}
