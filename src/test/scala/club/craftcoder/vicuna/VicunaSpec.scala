@@ -79,7 +79,7 @@ class VicunaSpec extends MockStartupSpec {
       TransitionDef("PAYMENT_CONFIRMING", "PAYMENT_CONFIRMED", auto = false, _.currArgs("result").asInstanceOf[String] == "pass")
     ))
 
-    Vicuna.buildChart("order","C:\\Users\\i\\OneDrive\\Work_Projects\\ProjectDeveloping\\Vicuna\\src\\test\\resources\\order_chart.html")
+    Vicuna.buildChart("order", "C:\\Users\\i\\OneDrive\\Work_Projects\\ProjectDeveloping\\Vicuna\\src\\test\\resources\\order_chart.html")
 
     val t1 = new Thread(new Runnable {
       override def run(): Unit = {
@@ -118,6 +118,11 @@ class VicunaSpec extends MockStartupSpec {
     })
     val t3 = new Thread(new Runnable {
       override def run(): Unit = {
+        Vicuna.start("order", "00003", "测试订单3")
+        Thread.sleep(1000)
+        assert(!Vicuna.go("order", "APPROVED_AI", "00003", Map("result" -> "adjust")))
+        assert(!Vicuna.next("order", "APPROVED_AI", "00003", Map("result" -> "pass")))
+        assert(Vicuna.go("order", "APPROVED_AI", "00003", Map("result" -> "pass")))
       }
     })
     val t4 = new Thread(new Runnable {

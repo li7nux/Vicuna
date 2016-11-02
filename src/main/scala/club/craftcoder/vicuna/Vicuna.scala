@@ -16,8 +16,8 @@ object Vicuna {
     this
   }
 
-  def buildChart(flowCode: String,path:String): this.type = {
-    ChartController.buildChart(flowCode,path)
+  def buildChart(flowCode: String, path: String): this.type = {
+    ChartController.buildChart(flowCode, path)
     this
   }
 
@@ -25,8 +25,12 @@ object Vicuna {
     FlowController.start(flowCode, objCode, objName)
   }
 
-  def next(flowCode: String, currNodeCode: String, objCode: String,args:Map[String,Any]=Map()): Resp[Void] = {
-    FlowController.next(flowCode, currNodeCode, objCode,args)
+  def next(flowCode: String, currNodeCode: String, objCode: String, args: Map[String, Any] = Map()): Resp[Void] = {
+    FlowController.next(flowCode, currNodeCode, objCode, args)
+  }
+
+  def go(flowCode: String, targetNodeCode: String, objCode: String, args: Map[String, Any] = Map()): Resp[Void] = {
+    FlowController.go(flowCode, targetNodeCode, objCode, args)
   }
 
 }

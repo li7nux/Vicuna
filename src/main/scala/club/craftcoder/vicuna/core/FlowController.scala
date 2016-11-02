@@ -79,6 +79,35 @@ object FlowController extends LazyLogging {
     }
   }
 
+  def go(flowCode: String, targetNodeCode: String, objCode: String, args: Map[String, Any] = Map()): Resp[Void] = {
+    logger.info(s"[STATUS] go node to [$targetNodeCode] obj $objCode at $flowCode")
+    val graphF = Container.GRAPH_CONTAINER.get(flowCode)
+    if (graphF.isDefined) {
+      val graph = graphF.get
+      val flowInst = getFlowInst(flowCode, objCode)
+      flowInst.currArgs ++= args
+      val goNodeF = graph.nodes
+        .filter(node => flowInst.currStatusCodes.contains(node._1) && node._2.childrenNodeCodes.contains(targetNodeCode)).values
+        .find {
+          node =>
+            Container.TRANSITION_CONTAINER(flowCode)(node.code).filter(targetNodeCode == _.toCode).exists {
+              transition =>
+                transition.condition == null || transition.condition(flowInst)
+            }
+        }
+      if (goNodeF.isDefined) {
+        logger.info(s"[STATUS] do go node from (${flowInst.currStatusCodes.mkString(",")}) to [$targetNodeCode] obj ${flowInst.objCode} at ${graph.code}")
+        execute(graph, targetNodeCode, goNodeF.get.code, flowInst.objCode)
+      } else {
+        logger.error(s"[STATUS] go node not arrived from (${flowInst.currStatusCodes.mkString(",")}) to [$targetNodeCode] obj $objCode at ${graph.code}")
+        Resp.notFound(s"[STATUS] go node not arrived from (${flowInst.currStatusCodes.mkString(",")}) to [$targetNodeCode] obj $objCode at ${graph.code}")
+      }
+    } else {
+      logger.error(s"[STATUS] not found flow [$flowCode]")
+      Resp.notFound(s"not found flow [$flowCode]")
+    }
+  }
+
   private def tryNext(graph: GraphDef, currNode: NodeDef, flowInst: FlowInst, force: Boolean = false): Resp[Void] = {
     if (flowInst.currStatusCodes.contains(currNode.code)) {
       if (currNode.childrenNodeCodes != null && currNode.childrenNodeCodes.nonEmpty) {
