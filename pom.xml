@@ -46,6 +46,10 @@
         </developer>
     </developers>
 
+    <properties>
+        <common.version>1.2.3</common.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.ecfront</groupId>
